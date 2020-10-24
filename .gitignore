@@ -71,5 +71,5 @@ Thumbs.db
 *.dll
 *.exe
 
-# 
-!SDL2-2.0.6/
+# Exclude SDL2
+!/SDL2-2.0.6/
