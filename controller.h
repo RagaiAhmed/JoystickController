@@ -2,6 +2,7 @@
 #define CONTROLLER_H
 
 #include <QMainWindow>
+#include <QtSerialPort/QSerialPort>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Controller; }
@@ -17,5 +18,6 @@ public:
 
 private:
     Ui::Controller *ui;
+    QSerialPort *serial;
 };
 #endif // CONTROLLER_H
