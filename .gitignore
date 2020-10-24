@@ -1,6 +1,9 @@
 # This file is used to ignore files which are generated
 # ----------------------------------------------------------------------------
 
+# Exclude SDL2
+!/SDL*/
+
 *~
 *.autosave
 *.a
@@ -66,10 +69,7 @@ Thumbs.db
 # Python byte code
 *.pyc
 
+
 # Binaries
-# --------
 *.dll
 *.exe
-
-# Exclude SDL2
-!/SDL2-2.0.6/
