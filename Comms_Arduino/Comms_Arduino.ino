@@ -1,4 +1,6 @@
 #include <Wire.h>  // To use I2C
+#include <SoftwareSerial.h>  // To use software serial
+SoftwareSerial mySerial(2, 3); // RX, TX
 
 // MPU sensor I2C slave address
 #define MPU_I2C_ADDR 104  
@@ -31,7 +33,9 @@ void setup()
   pinMode(pressurePin,INPUT);
   
   Wire.begin();  // Initializes I2C communication as master
-
+  Serial.begin(9600);
+  mySerial.begin(9600);
+  
   // Change sleep mode of the IMU sensor
   Wire.beginTransmission(MPU_I2C_ADDR);
   Wire.write(MPU_WAKE);  // Selects register
@@ -94,5 +98,7 @@ void loop()
         Serial.write(str.c_str());
         last_update = millis();  // Stores update time
   }
+
+  while(Serial.available())mySerial.write(Serial.read());
 
 }
