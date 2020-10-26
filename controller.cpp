@@ -2,6 +2,10 @@
 #include "ui_controller.h"
 #include <QIntValidator>
 #include <QDebug>
+#include <SDL.h>
+#include <SDL_gamecontroller.h>
+#include <SDL_joystick.h>
+
 
 void updatePorts(QComboBox *portList)
 {
@@ -34,7 +38,13 @@ Controller::Controller(QWidget *parent)
     // Updates ports list
     updatePorts(ui->portList);
 
+    SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER);
 
+    /* Open the first available controller. */
+    qDebug()<<SDL_NumJoysticks();
+    for (int i = 0; i < SDL_NumJoysticks(); ++i) {
+                qDebug()<<SDL_JoystickNameForIndex(i);
+    }
 }
 
 Controller::~Controller()
