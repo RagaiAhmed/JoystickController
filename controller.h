@@ -2,8 +2,6 @@
 #define CONTROLLER_H
 
 #include <QMainWindow>
-#include <QtSerialPort/QSerialPort>
-#include <QtSerialPort/QSerialPortInfo>
 
 
 QT_BEGIN_NAMESPACE
@@ -21,9 +19,10 @@ public:
 private slots:
     void on_portList_activated(const QString &arg1);
 
+    void on_controllerList_activated(int index);
+
 private:
     Ui::Controller *ui;
-    QSerialPort *serial;
 
 
 };
