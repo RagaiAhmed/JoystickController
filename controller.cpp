@@ -205,3 +205,15 @@ void Controller::on_controllerList_activated(int index)
         qDebug()<<"Couldn't attach Joystick";
     }
 }
+
+// Sends the new max speeds to the arduino
+void Controller::on_submitButton_clicked()
+{
+    QByteArray string;
+    string+="H" + QString::number(ui->HLineEdit->text().toInt());  // The horizontal max speed
+    string+="V" + QString::number(ui->VLineEdit->text().toInt());  // The vertical max speed
+
+    if(serial) serial->write(string);
+
+    qDebug(string);
+}

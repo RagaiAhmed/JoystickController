@@ -24,6 +24,8 @@ private slots:
 
     void on_controllerList_activated(int index);
 
+    void on_submitButton_clicked();
+
 private:
     Ui::Controller *ui;
 
