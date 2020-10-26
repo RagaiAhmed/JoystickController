@@ -83,7 +83,7 @@ void Controller::on_portList_activated(const QString &arg1)
     // Configuring new port
     serial = new QSerialPort;
     serial->setPortName(arg1);
-    if(serial->open(QSerialPort::WriteOnly))  // If opened successfully
+    if(serial->open(QSerialPort::ReadWrite))  // If opened successfully
     {
         // Arduino specific configuration
         serial->setBaudRate(QSerialPort::Baud9600);
