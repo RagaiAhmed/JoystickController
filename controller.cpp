@@ -7,10 +7,16 @@
 #include <SDL_joystick.h>  // For joystick
 #include <QtSerialPort/QSerialPort> // For Serial UART
 #include <QtSerialPort/QSerialPortInfo> // For getting port info
+#include <QTimer> // For make an event polling function executed at equal intervals
 
 SDL_Joystick *joy = NULL;  // The in use joystick
 QSerialPort *serial = NULL;  // The in use serial port
+QTimer *timer;  // The timer used for the pollJoystick
 
+// Used to convert joystick axis to char to send to arduino
+// The first sub is from 0 to 3 (defined axes in the joystick, usually x,y,z,Rx in order)
+// The second sub is negative then positive
+char axis_to_dir[4][2]= {{'L','R'},{'B','F'},{'D','U'},{'<','>'}};
 
 void updatePorts(QComboBox *portList)
 {
@@ -43,6 +49,41 @@ void updateControllers(QComboBox * controllerList)
     qDebug()<<"Updated available controllers!";
 }
 
+void Controller::pollJoystick()
+{
+    SDL_Event event;
+
+    // If any events are in queue (non blocking)
+    while(SDL_PollEvent(&event))
+    {
+        // Check the event type
+        switch(event.type)
+        {
+            case SDL_JOYAXISMOTION:  //A change in joystick axis
+                if(event.jaxis.axis<4&&abs(event.jaxis.value))  // If it is one of the first 4 axes
+                {
+                    QByteArray str;  // To store the string data to be sent
+
+                    // A flag of the direction set
+                    str += axis_to_dir[event.jaxis.axis][event.jaxis.value>0];
+
+                    // A number in range 0 - 100 (percentage speed from max)
+                    str += QString::number((int) (abs(event.jaxis.value) / 327.67l));
+
+
+                    // Sends to arduino
+                    if(serial) serial->write(str);
+
+                    qDebug()<<QString::fromStdString(str.toStdString());  // prints for debugging
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 
 Controller::Controller(QWidget *parent)
     : QMainWindow(parent)
@@ -52,6 +93,12 @@ Controller::Controller(QWidget *parent)
 
     // Starts SDL subsystem
     SDL_InitSubSystem(SDL_INIT_JOYSTICK);
+    SDL_JoystickEventState(SDL_ENABLE);  // Enables joystick events
+
+    timer = new QTimer;
+    connect(timer,SIGNAL(timeout()),this,SLOT(pollJoystick()));
+
+    timer->start(10); // Executes timer every 10ms
 
     // Validator for text input
     QIntValidator *limiter = new QIntValidator(0,1000);

@@ -16,6 +16,9 @@ public:
     Controller(QWidget *parent = nullptr);
     ~Controller();
 
+public slots:
+    void pollJoystick();
+
 private slots:
     void on_portList_activated(const QString &arg1);
 
@@ -23,7 +26,6 @@ private slots:
 
 private:
     Ui::Controller *ui;
-
 
 };
 #endif // CONTROLLER_H
