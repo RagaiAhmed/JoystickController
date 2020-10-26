@@ -49,10 +49,9 @@ void updateControllers(QComboBox * controllerList)
     qDebug()<<"Updated available controllers!";
 }
 
-void Controller::pollJoystick()
+void Controller::FixedUpdate()
 {
     SDL_Event event;
-
     // If any events are in queue (non blocking)
     while(SDL_PollEvent(&event))
     {
@@ -60,7 +59,7 @@ void Controller::pollJoystick()
         switch(event.type)
         {
             case SDL_JOYAXISMOTION:  //A change in joystick axis
-                if(event.jaxis.axis<4&&abs(event.jaxis.value))  // If it is one of the first 4 axes
+                if(event.jaxis.axis<4)  // If it is one of the first 4 axes
                 {
                     QByteArray str;  // To store the string data to be sent
 
@@ -78,8 +77,76 @@ void Controller::pollJoystick()
                 }
 
                 break;
-            default:
+
+            default:  // Ignore any other event
                 break;
+        }
+    }
+
+    while(serial && serial->peek(1)!="")  // If there is data in the stream
+    {
+        char ind = serial->read(1)[0];  // Read first character
+        if(ind=='\n') continue;  // If it is a newline character skip
+        if(ind=='\0') continue;  // If it is a null character skip
+
+        int num = 0;
+        if(serial->peek(1)!="")  // If there is more characters
+        {
+            int sign =1;
+
+            char got = serial->peek(1)[0];  // Peek one character
+
+            // If it is a negative sign character
+            if(got=='-')
+            {
+                sign*=-1;  // Flip the sign
+
+                serial->read(1);  // Remove character from stream
+                got = serial->peek(1)[0];  // Peek one character
+            }
+
+
+            while(got<58 && got >=48)  // If character corresponds to a digit
+            {
+                got = serial->read(1)[0]-48;  // Remove that character from the stream
+
+                num= num*10+got;  // Add it to our number
+
+                if(serial->peek(1)=="") break;  // If there is no more characters then exit loop
+
+                got = serial->peek(1)[0];  // Else peek another character
+            }
+            num*=sign;  // Multiply by the sign
+        }
+
+
+
+        // Map the character to its function
+        switch(ind)
+        {
+            case 'P':  // Update pressure textbox
+                ui->PLineEdit->setText(QString::number(num));
+                break;
+            case 'X':  // Update Gyro X value
+                ui->GXLineEdit->setText(QString::number(num));
+                break;
+            case 'Y':  // Update Gyro Y value
+                ui->GYLineEdit->setText(QString::number(num));
+                break;
+            case 'Z':  // Update Gyro Z value
+                ui->GZLineEdit->setText(QString::number(num));
+                break;
+            case 'x':  // Update Acc X value
+                ui->AXLineEdit->setText(QString::number(num));
+                break;
+            case 'y':  // Update Acc Y value
+                ui->AYLineEdit->setText(QString::number(num));
+                break;
+            case 'z':  // Update Acc Z value
+                ui->AZLineEdit->setText(QString::number(num));
+                   break;
+            default:
+                qDebug()<<"Recieved invalid data !!";
         }
     }
 }
@@ -96,9 +163,9 @@ Controller::Controller(QWidget *parent)
     SDL_JoystickEventState(SDL_ENABLE);  // Enables joystick events
 
     timer = new QTimer;
-    connect(timer,SIGNAL(timeout()),this,SLOT(pollJoystick()));
+    connect(timer,SIGNAL(timeout()),this,SLOT(FixedUpdate()));
 
-    timer->start(10); // Executes timer every 10ms
+    timer->start(100); // Executes timer every 10ms
 
     // Validator for text input
     QIntValidator *limiter = new QIntValidator(0,1000);

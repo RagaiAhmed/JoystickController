@@ -17,7 +17,7 @@ public:
     ~Controller();
 
 public slots:
-    void pollJoystick();
+    void FixedUpdate();
 
 private slots:
     void on_portList_activated(const QString &arg1);
