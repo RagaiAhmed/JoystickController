@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QtSerialPort/QSerialPort>
+#include <QtSerialPort/QSerialPortInfo>
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Controller; }
@@ -16,8 +18,13 @@ public:
     Controller(QWidget *parent = nullptr);
     ~Controller();
 
+private slots:
+    void on_portList_activated(const QString &arg1);
+
 private:
     Ui::Controller *ui;
     QSerialPort *serial;
+
+
 };
 #endif // CONTROLLER_H
