@@ -165,7 +165,7 @@ Controller::Controller(QWidget *parent)
     timer = new QTimer;
     connect(timer,SIGNAL(timeout()),this,SLOT(FixedUpdate()));
 
-    timer->start(100); // Executes timer every 10ms
+    timer->start(100); // Executes timer every 100ms
 
     // Validator for text input
     QIntValidator *limiter = new QIntValidator(0,1000);
