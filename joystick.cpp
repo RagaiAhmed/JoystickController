@@ -11,9 +11,9 @@
 static std::map<int,std::string> axis_to_dir =
     {
         { 0, "LR" },
-        { 1, "BF" },
-        { 2, "DU" },
-        { 3, "<>" }
+        { 1, "FB" },
+        { 3, "UD" },
+        { 2, "<>" }
     };
 
 
@@ -106,8 +106,8 @@ void Joystick::execute_events()
                     }
                     else
                     {
-                        // Add 100 if bigger than 3276.7 else 0
-                        str += QString::number((int)(abs(event.jaxis.value) > 3276.7l)*100);
+                        // Add 100 if bigger than 32767 else 0
+                        str += QString::number((int)(abs(event.jaxis.value) > 10*3276.7l)*100);
                     }
 
                     // Send command signal
@@ -117,6 +117,7 @@ void Joystick::execute_events()
                 break;
 
             default:  // Ignore any other event
+                qDebug()<<event.type;
                 break;
         }
     }
