@@ -1,8 +1,7 @@
 #ifndef JOYSTICK_H
 #define JOYSTICK_H
 
-#include <SDL_joystick.h>  // For joystick
-#include <ui_controller.h>
+#include <SDL_joystick.h>  // For Joystick input
 #include <QComboBox>
 
 
@@ -15,27 +14,29 @@ public:
     // If set to true, sends varying speeds from [0 to 100], else always sends 0 or 100
     static const bool isAnalog = true;
 
-    Joystick(QComboBox * controllerList);
+    Joystick(QComboBox * );
     ~Joystick();
 
-    void updateControllers();
+    // Updates the available joystick list
+    void updateJoysticks();
 
-
+    // When called, polls for events from the connected joystick
     void execute_events();
 
-
+    // Deattaches the current joystick
     void deattach();
 
+    // Attaches the specified joystick from index
     void attach(int);
 
 signals:
+    // Sends command to other classes (Sender)
     void sendCommand(QByteArray);
-
 
 
 private:
     SDL_Joystick *joy = NULL;  // The in use joystick
-    QComboBox *controllerList = NULL;  // The list ui object
+    QComboBox *joystick = NULL;  // The list ui object
 };
 
 #endif // JOYSTICK_H

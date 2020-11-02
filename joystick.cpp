@@ -1,4 +1,5 @@
 #include "joystick.h"
+
 #include <QDebug>  // For debugging
 #include <SDL.h>  // SDL2 header
 #include <map>
@@ -18,27 +19,27 @@ static std::map<int,std::string> axis_to_dir =
 
 Joystick::Joystick(QComboBox * controllerList)
 {
-    this->controllerList = controllerList;  // Stores the list object
+    this->joystick = controllerList;  // Stores the list object
 
     // Starts SDL subsystem
     SDL_InitSubSystem(SDL_INIT_JOYSTICK);
     SDL_JoystickEventState(SDL_ENABLE);  // Enables joystick events
 
-    updateControllers();  // Init controllers list
+    updateJoysticks();  // Init controllers list
 
 }
 
-void Joystick::updateControllers()
+void Joystick::updateJoysticks()
 {
     // Clears old items
-    controllerList->clear();
+    joystick->clear();
 
     // Puts empty contoller
-    controllerList->addItem("Controller");
+    joystick->addItem("Controller");
 
     // Puts Controller in the list
     for(int i=0;i<SDL_NumJoysticks();++i)
-        controllerList->addItem(SDL_JoystickNameForIndex(i));
+        joystick->addItem(SDL_JoystickNameForIndex(i));
 
     qDebug()<<"Updated available controllers!";
 }
@@ -51,9 +52,9 @@ Joystick::~Joystick()
 
 void Joystick::deattach()
 {
-    // Deattaching old controller
     if(joy && SDL_JoystickGetAttached(joy))
     {
+        // Deattaching old controller
         qDebug()<<"Deattaching old controller";
         SDL_JoystickClose(joy);
         joy=NULL;

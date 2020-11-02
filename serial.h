@@ -3,7 +3,6 @@
 
 #include <QtSerialPort/QSerialPort> // For Serial UART
 #include <QtSerialPort/QSerialPortInfo> // For getting port info
-#include <ui_controller.h>
 
 #include <QComboBox>
 #include<QObject>
@@ -11,21 +10,27 @@ class SerialControl : public QObject
 {
     Q_OBJECT
 public:
-    SerialControl(QComboBox *portList);
+    SerialControl(QComboBox *);
     ~SerialControl();
 
+    // Update the available ports list
     void updatePorts();
 
+    // Closes the current serial port
     void close();
 
+    // Connects to a serial port given it's name
     void connect_port(QString port);
 
+    // When called, receives data from UART
     void execute_events();
 
 public slots:
+    // Sends data over UART
     void sendUART(QByteArray);
 
 signals:
+    // Emitted when received data over UART
     void receiveUART(QByteArray);
 
 

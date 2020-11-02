@@ -1,5 +1,6 @@
-﻿#include "controller.h"
-#include "ui_controller.h"
+﻿#include "gui.h"
+
+#include <ui_gui.h>
 
 #include <QDebug>  // For debugging
 #include <QIntValidator>  // For validating text input
@@ -9,9 +10,9 @@ QTimer *timer;  // The timer used for the pollJoystick
 
 QIntValidator limiter(0,1000);  // Limits text to only integers in range [0,1000]
 
-Controller::Controller(QWidget *parent)
+MainController::MainController(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::Controller)
+    , ui(new Ui::MainController)
 {
     ui->setupUi(this);
 
@@ -25,9 +26,9 @@ Controller::Controller(QWidget *parent)
     // Connect Timer timeout -> GUI fixedUpdate
     connect(timer,SIGNAL(timeout()),this,SLOT(FixedUpdate()));
 
-    timer->start(100); // Executes timer every 100ms
+    timer->start(timerPeriod); // Executes timer every 100ms
 
-    joy = new Joystick(ui->controllerList);  // Initializes joystick handling object
+    joy = new Joystick(ui->joystickList);  // Initializes joystick handling object
     serial = new SerialControl(ui->portList);  // Initializes serial UART handling object
 
     // Connect GUI sendCommand -> Serial sendUART
@@ -41,21 +42,21 @@ Controller::Controller(QWidget *parent)
 
 
 }
-Controller::~Controller()
+MainController::~MainController()
 {
     delete joy;  // Deletes the joystick handler
     delete serial;  // Deletes the serial handler
     delete ui;
 }
 
-void Controller::FixedUpdate()
+void MainController::FixedUpdate()
 {
     joy->execute_events();  // Get joystick events and executes them
 
     serial->execute_events();  // Reads any incoming data and executes them
 }
 
-void Controller::on_portList_activated(const QString &arg1)
+void MainController::on_portList_activated(const QString &arg1)
 {
     // Close old serial
     serial->close();
@@ -73,7 +74,7 @@ void Controller::on_portList_activated(const QString &arg1)
 
 }
 
-void Controller::on_controllerList_activated(int index)
+void MainController::on_joystickList_activated(int index)
 {
     // Deattaches old controller
     joy->deattach();
@@ -83,7 +84,7 @@ void Controller::on_controllerList_activated(int index)
     if(index==0)
     {
         // Updates ports list
-        joy->updateControllers();
+        joy->updateJoysticks();
         return;
     }
 
@@ -93,7 +94,7 @@ void Controller::on_controllerList_activated(int index)
 }
 
 // Sends the new max speeds to the arduino
-void Controller::on_submitButton_clicked()
+void MainController::on_submitButton_clicked()
 {
 
     // Constructs speeds strings
@@ -111,7 +112,7 @@ void Controller::on_submitButton_clicked()
 
 
 // Executes a received command
-void Controller::executeCommand(QByteArray str)
+void MainController::executeCommand(QByteArray str)
 {
     char ind = str[0]; // Gets first char as indicator
 
