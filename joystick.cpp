@@ -1,12 +1,19 @@
 #include "joystick.h"
 #include <QDebug>  // For debugging
 #include <SDL.h>  // SDL2 header
-
+#include <map>
 
 // Used to convert joystick axis to char to send to arduino
-// The first sub is from 0 to 3 (defined axes in the joystick, usually x,y,z,Rx in order)
-// The second sub is negative then positive
-static char axis_to_dir[4][2]= {{'L','R'},{'B','F'},{'D','U'},{'<','>'}};
+// by mapping each axis to a string with negative then positive direction
+// so each axis character is extracted as such
+// axis_to_dir[axis_index][is_positive_direction]
+static std::map<int,std::string> axis_to_dir =
+    {
+        { 0, "LR" },
+        { 1, "BF" },
+        { 2, "DU" },
+        { 3, "<>" }
+    };
 
 
 Joystick::Joystick(QComboBox * controllerList)
@@ -76,6 +83,7 @@ void Joystick::attach(int index)
 void Joystick::execute_events()
 {
     SDL_Event event;
+
     // If any events are in queue (non blocking)
     while(SDL_PollEvent(&event))
     {
@@ -83,15 +91,23 @@ void Joystick::execute_events()
         switch(event.type)
         {
             case SDL_JOYAXISMOTION:  //A change in joystick axis
-                if(event.jaxis.axis<4)  // If it is one of the first 4 axes
+                if(axis_to_dir.count(event.jaxis.axis))  // If the axis in our directions map
                 {
                     QByteArray str;  // To store the string data to be sent
 
                     // A flag of the direction set
                     str += axis_to_dir[event.jaxis.axis][event.jaxis.value>0];
 
-                    // A number in range 0 - 100 (percentage speed from max)
-                    str += QString::number((int) (abs(event.jaxis.value) / 327.67l));
+                    if(isAnalog)
+                    {
+                        // A number in range 0 - 100 (percentage speed from max)
+                        str += QString::number((int) (abs(event.jaxis.value) / 327.67l));
+                    }
+                    else
+                    {
+                        // Add 100 if bigger than 3276.7 else 0
+                        str += QString::number((int)(abs(event.jaxis.value) > 3276.7l)*100);
+                    }
 
                     // Send command signal
                     emit(sendCommand(str));

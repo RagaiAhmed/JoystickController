@@ -3,13 +3,18 @@
 
 #include <SDL_joystick.h>  // For joystick
 #include <ui_controller.h>
-
 #include <QComboBox>
+
+
 
 class Joystick: public QObject
 {
     Q_OBJECT
 public:
+
+    // If set to true, sends varying speeds from [0 to 100], else always sends 0 or 100
+    static const bool isAnalog = true;
+
     Joystick(QComboBox * controllerList);
     ~Joystick();
 
