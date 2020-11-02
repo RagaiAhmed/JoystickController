@@ -15,7 +15,6 @@ SoftwareSerial mySerial(2, 3); // RX, TX
 #define pressurePin A1
 
 
-// Stores the yaw angle
 double ax = 0 ;
 double ay = 0 ;
 double az = 0 ;

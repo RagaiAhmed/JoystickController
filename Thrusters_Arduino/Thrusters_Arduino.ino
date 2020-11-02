@@ -8,6 +8,7 @@ unsigned int Vspeed = 0;
 unsigned int Hspeed = 0;
 
 long vals [4]= {0,0,0,0};
+
 void loop() 
 {
   while(Serial.available())

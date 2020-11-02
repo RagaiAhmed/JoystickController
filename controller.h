@@ -3,10 +3,12 @@
 
 #include <QMainWindow>
 
-
 QT_BEGIN_NAMESPACE
 namespace Ui { class Controller; }
 QT_END_NAMESPACE
+
+#include <joystick.h>
+#include <serial.h>
 
 class Controller : public QMainWindow
 {
@@ -19,6 +21,11 @@ public:
 public slots:
     void FixedUpdate();
 
+    void executeCommand(QByteArray);
+
+public: signals:
+    void sendCommand(QByteArray);
+
 private slots:
     void on_portList_activated(const QString &arg1);
 
@@ -28,6 +35,12 @@ private slots:
 
 private:
     Ui::Controller *ui;
+    SerialControl *serial;
+    Joystick* joy;
 
 };
+
+
+
+
 #endif // CONTROLLER_H
