@@ -116,6 +116,7 @@ void MainController::executeCommand(QByteArray str)
 {
     char ind = str[0]; // Gets first char as indicator
 
+    str.remove(0,1);
     QLineEdit *textBox;
 
     // Finds the command meaning
