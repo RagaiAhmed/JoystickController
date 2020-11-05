@@ -1,35 +1,82 @@
+#include <SoftwareSerial.h>
+
+
 unsigned int Vspeed = 0;  // Maximum Vertical thruster speed
 unsigned int Hspeed = 0;  // Maximum Horizontal thruster speed
 
 const bool analog_speeds = false;  // Whether are speeds taken from joystick analog
 const int cutoff_joystick = 10;  // Up to 10% is considered deadzone
 
+int cutoff_speed = 0;  // Any speed smaller than this then set to 0, can be set in range [0 to 1000]
+int start_pwm = 0;  // Thrusters start at this pwm in range [0 to 255] then scale linearly
+
 const int no_thrusters = 8;  // Number of connected thrusters
 const int no_directions = 4; // Number of axes of movement
 
-#define DEBUG 2  // Debug level (the bigger the number the more it is verbose)
+#define DEBUG 0  // Debug level (the bigger the number the more it is verbose)
+
+
+SoftwareSerial otherSerial(A3,A2) ;  // Init software serial pins
+
+
+// Select the comms serial
+//#define commsSerial Serial // if all to hardware serial
+#define commsSerial otherSerial // if comms is on software serial
+
+
 
 // Thrusters pins
-#define ThrusterPwm_A 0
-#define ThrusterDir_A 0
-#define ThrusterPwm_B 0
-#define ThrusterDir_B 0
-#define ThrusterPwm_C 0
-#define ThrusterDir_C 0
-#define ThrusterPwm_D 0
-#define ThrusterDir_D 0
-#define ThrusterPwm_E 5
-#define ThrusterDir_E 4
-#define ThrusterPwm_F 3
-#define ThrusterDir_F 2
-#define ThrusterPwm_G 5
-#define ThrusterDir_G 4
-#define ThrusterPwm_H 3
-#define ThrusterDir_H 2
+#define ThrusterDir_H_UR 7
+#define ThrusterPwm_H_UR 6
+
+#define ThrusterDir_H_DR 8
+#define ThrusterPwm_H_DR 9
+
+#define ThrusterDir_H_DL 2
+#define ThrusterPwm_H_DL 3
+
+#define ThrusterDir_H_UL 4
+#define ThrusterPwm_H_UL 5
+
+
+#define ThrusterDir_V_UR A0
+#define ThrusterPwm_V_UR 11
+
+#define ThrusterDir_V_DR 12
+#define ThrusterPwm_V_DR 10
+
+#define ThrusterDir_V_DL A0
+#define ThrusterPwm_V_DL 11
+
+#define ThrusterDir_V_UL 12
+#define ThrusterPwm_V_UL 10
 
 // Putting them in arrays for easier usage
-int thrusters_pwm_pins[no_thrusters] = {ThrusterPwm_A,ThrusterPwm_B,ThrusterPwm_C,ThrusterPwm_D,ThrusterPwm_E,ThrusterPwm_F,ThrusterPwm_G,ThrusterPwm_H};
-int thrusters_dir_pins[no_thrusters] = {ThrusterDir_A,ThrusterDir_B,ThrusterDir_C,ThrusterDir_D,ThrusterDir_E,ThrusterDir_F,ThrusterDir_G,ThrusterDir_H};
+int thrusters_pwm_pins[no_thrusters] = 
+  {
+    ThrusterPwm_H_UR,
+    ThrusterPwm_H_DR,
+    ThrusterPwm_H_DL,
+    ThrusterPwm_H_UL,
+    
+    ThrusterPwm_V_UR,
+    ThrusterPwm_V_DR,
+    ThrusterPwm_V_DL,
+    ThrusterPwm_V_UL
+    };
+    
+int thrusters_dir_pins[no_thrusters] = 
+  {
+    ThrusterDir_H_UR,
+    ThrusterDir_H_DR,
+    ThrusterDir_H_DL,
+    ThrusterDir_H_UL,
+    
+    ThrusterDir_V_UR,
+    ThrusterDir_V_DR,
+    ThrusterDir_V_DL,
+    ThrusterDir_V_UL
+   };
 
 // Array holding percentages in each of the directions from the joystick 
 int vals [no_directions] = {};
@@ -41,10 +88,24 @@ double thruster_speeds[no_thrusters] = {};
 // Numbered from 0 to 7 clockwise starting from the top right corner horizontal thruster, then the vertical thrusters
 const int directions[no_directions][no_thrusters]=
 {
+  
   {-1,1,-1,1,0,0,0,0}, // RL
   {1,1,1,1,0,0,0,0},   // FB
   {0,0,0,0,1,1,1,1},   // UD
   {-1,-1,1,1,0,0,0,0}  // ><
+};
+
+// Which thrusters are flipped directions
+const int flipped[no_thrusters] = 
+{
+  1,  // H UR
+  1,  // H DR
+  -1, // H DL
+  -1, // H UL
+  1,  // V UR
+  1,  // V DR
+  1,  // V DL
+  1   // V UL
 };
 
 // Adds two arrays in place of the first array
@@ -66,10 +127,24 @@ void self_vec_mult(T1 *self,T2 other)
 
 void setup() 
 {
+  
   // Begins serial UART
   Serial.begin(9600);
-
   Serial.setTimeout(50);
+
+
+  otherSerial.begin(9600);
+  otherSerial.setTimeout(50);
+
+
+  //Pinmode for all used pins
+  for (int i=0;i<no_thrusters;i++) 
+  {
+    pinMode(thrusters_dir_pins[i],OUTPUT);  // Set direction pin mode
+    pinMode(thrusters_pwm_pins[i],OUTPUT);  // Set pwm pin mode
+  }
+
+  apply_to_driver();  // Set all pins to default
 }
 
 // Adjusts thrusters speeds 
@@ -86,13 +161,13 @@ void adjust_thrusters()
     // If combined speeds exceed max, then flag to be scaled down
     for(int i=0;i<4;i++) 
     {
-      if (thruster_speeds[i]>Hspeed)
+      if (abs(thruster_speeds[i])>Hspeed)
       {
         exceed_max = true; 
         break;
       }
 
-      if (thruster_speeds[i+4]>Vspeed)
+      if (abs(thruster_speeds[i+4])>Vspeed)
       {
         exceed_max = true; 
         break;
@@ -105,8 +180,8 @@ void adjust_thrusters()
     double max_H=0,max_V=0;
 
     // Gets the max Horizontal speed and Vertical speed of the thrusters
-    for(int i=0;i<4;i++) max_H = max(max_H,thruster_speeds[i]);
-    for(int i=4;i<8;i++) max_V = max(max_V,thruster_speeds[i]);
+    for(int i=0;i<4;i++) max_H = max(max_H,abs(thruster_speeds[i]));
+    for(int i=4;i<8;i++) max_V = max(max_V,abs(thruster_speeds[i]));
 
     // Scales them, so that they keep the same ratio, but thrusters are maxed to the set max speed
     if(max_H) for(int i=0;i<4;i++) thruster_speeds[i] = thruster_speeds[i] * Hspeed / max_H;
@@ -119,8 +194,13 @@ void apply_to_driver()
 {
   for (int i=0;i<no_thrusters;i++) 
   {
-    digitalWrite(thrusters_dir_pins[i],thruster_speeds[i]>0);  // Set direction pin
-    analogWrite(thrusters_pwm_pins[i],map(abs(thruster_speeds[i]),0,1000,0,255));  // Set pwm pin
+    digitalWrite(thrusters_dir_pins[i],thruster_speeds[i]*flipped[i]>0);  // Set direction pin
+    if(abs(thruster_speeds[i])<cutoff_speed) // Check pwm cut off
+    {
+      thruster_speeds[i]=0;  
+      analogWrite(thrusters_pwm_pins[i],0);  // Set pwm pin
+    }
+    else analogWrite(thrusters_pwm_pins[i],map(abs(thruster_speeds[i]),0,1000,start_pwm,255));  // Set pwm pin
   }
   
 }
@@ -128,14 +208,14 @@ void apply_to_driver()
 void loop() 
 {
   // If there any serial data
-  while(Serial.available())
+  while(commsSerial.available())
   {
     // Read the first char
-    char ind  = Serial.read();
+    char ind  = commsSerial.read();
     if(ind=='\n'||ind=='\0') continue;
 
     // Parse then next int
-    int num = Serial.parseInt();
+    int num = commsSerial.parseInt();
 
     if(DEBUG>=3)  // Print them for debugging
     {
@@ -146,6 +226,10 @@ void loop()
     int changed = -1;  // The changed direction
     switch(ind)
     {
+      case 'C':  // Change speed cutoff
+        cutoff_speed = num; changed =-2; break;
+      case 'S':  // Change pwm start
+        start_pwm = num; changed =-2; break;
       case 'V':  // Change Veritcal max speed
         Vspeed = num; changed = -2; break;
       case 'H':  // Change Horizontal max speed
