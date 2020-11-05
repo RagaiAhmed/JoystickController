@@ -12,8 +12,8 @@ static std::map<int,std::string> axis_to_dir =
     {
         { 0, "LR" },
         { 1, "FB" },
-        { 3, "UD" },
-        { 2, "<>" }
+        { 4, "UD" },
+        { 3, "<>" }
     };
 
 
