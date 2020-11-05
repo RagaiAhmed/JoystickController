@@ -8,7 +8,8 @@
 
 QTimer *timer;  // The timer used for the pollJoystick
 
-QIntValidator limiter(0,1000);  // Limits text to only integers in range [0,1000]
+QIntValidator limiter1000(0,1000);  // Limits text to only integers in range [0,1000]
+QIntValidator limiter255(0,255);  // Limits text to only integers in range [0,1000]
 
 MainController::MainController(QWidget *parent)
     : QMainWindow(parent)
@@ -16,9 +17,12 @@ MainController::MainController(QWidget *parent)
 {
     ui->setupUi(this);
 
-    // Validator for text input
-    ui->HLineEdit->setValidator(&limiter);
-    ui->VLineEdit->setValidator(&limiter);
+    // Validator for text inputs
+    ui->HnormLineEdit->setValidator(&limiter1000);
+    ui->VnormLineEdit->setValidator(&limiter1000);
+
+    ui->CutLineEdit->setValidator(&limiter1000);
+    ui->PwmStartLineEdit->setValidator(&limiter255);
 
     // Init Qtimer
     timer = new QTimer;
@@ -37,7 +41,7 @@ MainController::MainController(QWidget *parent)
     // Connect Joystick sendCommand -> Serial sendUART
     connect(joy,SIGNAL(sendCommand(QByteArray)),serial,SLOT(sendUART(QByteArray)));
 
-    // Connect Joystick sendCommand -> Serial sendUART
+    // Connect serial receiveUART -> GUI executeCommand
     connect(serial,SIGNAL(receiveUART(QByteArray)),this,SLOT(executeCommand(QByteArray)));
 
 
@@ -99,14 +103,24 @@ void MainController::on_submitButton_clicked()
 
     // Constructs speeds strings
     QByteArray h_cmd;
-    h_cmd += "H" + QString::number(ui->HLineEdit->text().toInt());
+    h_cmd += "H" + QString::number(ui->HnormLineEdit->text().toInt());
 
     QByteArray v_cmd;
-    v_cmd += "V" + QString::number(ui->VLineEdit->text().toInt());
+    v_cmd += "V" + QString::number(ui->VnormLineEdit->text().toInt());
+
+    QByteArray cutoff_cmd;
+    cutoff_cmd += "C" + QString::number(ui->CutLineEdit->text().toInt());
+
+    QByteArray pwm_cmd;
+    pwm_cmd += "S" + QString::number(ui->PwmStartLineEdit->text().toInt());
+
+
 
     // Emits the speeds commands
     emit(sendCommand(h_cmd)); // The horizontal max speed
     emit(sendCommand(v_cmd)); // The vertical max speed
+    emit(sendCommand(cutoff_cmd)); // The cutoff speed
+    emit(sendCommand(pwm_cmd)); // The starting pwm
 
 }
 

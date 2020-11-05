@@ -5,7 +5,6 @@
 #include <QComboBox>
 
 
-
 class Joystick: public QObject
 {
     Q_OBJECT

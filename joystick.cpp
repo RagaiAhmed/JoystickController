@@ -29,6 +29,14 @@ Joystick::Joystick(QComboBox * controllerList)
 
 }
 
+
+Joystick::~Joystick()
+{
+    // Closing SDL subsystem
+    SDL_Quit();
+}
+
+
 void Joystick::updateJoysticks()
 {
     // Clears old items
@@ -44,11 +52,6 @@ void Joystick::updateJoysticks()
     qDebug()<<"Updated available controllers!";
 }
 
-Joystick::~Joystick()
-{
-    // Closing SDL subsystem
-    SDL_Quit();
-}
 
 void Joystick::deattach()
 {
@@ -61,6 +64,7 @@ void Joystick::deattach()
     }
 
 }
+
 
 void Joystick::attach(int index)
 {
@@ -113,8 +117,8 @@ void Joystick::execute_events()
                     // Send command signal
                     emit(sendCommand(str));
                 }
-
                 break;
+
 
             default:  // Ignore any other event
                 qDebug()<<event.type;
